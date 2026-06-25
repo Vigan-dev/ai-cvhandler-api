@@ -1,17 +1,46 @@
-try {
-  process.loadEnvFile();
-} catch (error) {
-  const isMissingFile =
-    error instanceof Error &&
-    'code' in error &&
-    error.code === 'ENOENT';
+loadEnvironmentFile();
 
-  if (!isMissingFile) {
-    throw error;
+export const config = {
+  port: parsePort(process.env.PORT),
+  corsOrigins: parseOrigins(process.env.CORS_ORIGIN),
+  bodyLimit: '1mb',
+  shutdownTimeoutMs: 10_000,
+} as const;
+
+function loadEnvironmentFile() {
+  try {
+    process.loadEnvFile();
+  } catch (error) {
+    if (!isMissingFileError(error)) throw error;
   }
 }
 
-export const config = {
-  port: Number(process.env.PORT ?? 3001),
-  corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
-};
+function isMissingFileError(error: unknown) {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'ENOENT'
+  );
+}
+
+function parsePort(value: string | undefined) {
+  const port = Number(value ?? 3001);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error('PORT must be an integer between 1 and 65535');
+  }
+  return port;
+}
+
+function parseOrigins(value: string | undefined) {
+  const origins = (value ?? 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  if (origins.length === 0) {
+    throw new Error('CORS_ORIGIN must include at least one origin');
+  }
+
+  return origins;
+}

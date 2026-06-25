@@ -5,13 +5,11 @@ export function createAppRouter(appService = new AppService()) {
   const router = Router();
 
   router.get('/', (_, res) => {
-    res.send(appService.getHello());
+    res.json(appService.getInfo());
   });
 
   router.get('/api/health', (_, res) => {
-    res.json({
-      status: 'ok',
-    });
+    res.json(appService.getHealth());
   });
 
   return router;

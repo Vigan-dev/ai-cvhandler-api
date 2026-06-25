@@ -1,25 +1,42 @@
 import { createApp } from './app';
 import { config } from './config';
 
-async function bootstrap() {
+function bootstrap() {
   const app = createApp();
   const server = app.listen(config.port, () => {
-    console.log(`Backend API running on http://localhost:${config.port}`);
+    console.log(`Local server running on http://localhost:${config.port}`);
   });
 
-  async function shutdown(signal: string) {
+  server.on('error', (error) => {
+    console.error('Failed to start the local server:', error);
+    process.exitCode = 1;
+  });
+
+  let shuttingDown = false;
+
+  function shutdown(signal: string) {
+    if (shuttingDown) return;
+    shuttingDown = true;
     console.log(`${signal} received. Shutting down...`);
 
-    server.close(() => {
+    const forceExitTimer = setTimeout(() => {
+      console.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, config.shutdownTimeoutMs);
+    forceExitTimer.unref();
+
+    server.close((error) => {
+      clearTimeout(forceExitTimer);
+      if (error) {
+        console.error('Server shutdown failed:', error);
+        process.exit(1);
+      }
       process.exit(0);
     });
   }
 
-  process.once('SIGINT', () => void shutdown('SIGINT'));
-  process.once('SIGTERM', () => void shutdown('SIGTERM'));
+  process.once('SIGINT', () => shutdown('SIGINT'));
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
 }
 
-bootstrap().catch((error) => {
-  console.error('Failed to start the backend:', error);
-  process.exit(1);
-});
+bootstrap();
