@@ -25,6 +25,8 @@ local Ollama integration.
 | --- | --- | --- |
 | `PORT` | `3001` | HTTP server port |
 | `CORS_ORIGIN` | `http://localhost:3000` | Allowed frontend origin |
+| `RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window in milliseconds |
+| `RATE_LIMIT_MAX_REQUESTS` | `120` | Maximum requests per client per window |
 
 Copy `.env.example` to `.env` to override the defaults. The application loads
 the file automatically when it starts.
@@ -41,6 +43,7 @@ responses include the same request identifier in their body.
 
 - Express implementation with strict configured CORS origins.
 - One-megabyte JSON request limit.
+- In-memory per-client rate limiting.
 - Basic API security headers.
 - Structured 400, 403, 404, and 500 responses.
 - Graceful process shutdown with a timeout.

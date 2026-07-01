@@ -6,6 +6,7 @@ import express, {
 } from 'express';
 import { config } from './config';
 import { getErrorResponse, HttpError } from './errors';
+import { createRateLimitMiddleware } from './rate-limit';
 import { createApiRouter } from './routes';
 
 export function createApp() {
@@ -26,6 +27,7 @@ export function createApp() {
       },
     }),
   );
+  app.use(createRateLimitMiddleware(config.rateLimit));
   app.use(express.json({ limit: config.bodyLimit }));
 
   app.use(createApiRouter());

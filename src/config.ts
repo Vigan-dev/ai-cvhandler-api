@@ -4,6 +4,18 @@ export const config = {
   port: parsePort(process.env.PORT),
   corsOrigins: parseOrigins(process.env.CORS_ORIGIN),
   bodyLimit: '1mb',
+  rateLimit: {
+    windowMs: parsePositiveInteger(
+      process.env.RATE_LIMIT_WINDOW_MS,
+      60_000,
+      'RATE_LIMIT_WINDOW_MS',
+    ),
+    maxRequests: parsePositiveInteger(
+      process.env.RATE_LIMIT_MAX_REQUESTS,
+      120,
+      'RATE_LIMIT_MAX_REQUESTS',
+    ),
+  },
   shutdownTimeoutMs: 10_000,
 } as const;
 
@@ -43,4 +55,16 @@ function parseOrigins(value: string | undefined) {
   }
 
   return origins;
+}
+
+function parsePositiveInteger(
+  value: string | undefined,
+  fallback: number,
+  name: string,
+) {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`${name} must be a positive integer`);
+  }
+  return parsed;
 }
